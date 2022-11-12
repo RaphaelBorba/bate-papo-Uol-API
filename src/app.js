@@ -129,12 +129,30 @@ app.get('/messages', async (req, res)=>{
             showMessages = showMessages.slice(limit)
         }
 
-
-        console.log(messages)
         res.status(200).send(showMessages)
-        
+
     } catch (error) {
         console.log(error)
+        res.sendStatus(500)
+    }
+})
+
+app.post('/status', async(req,res)=>{
+
+    const user = req.headers.user
+
+    if(!user){
+        res.sendStatus(404)
+        return
+    }
+
+    try {
+        const participants = await participantsC.find().toArray()
+        participantsC.updateOne({name:user}, {$set : {lastStatus: Date.now()}})
+
+        res.sendStatus(200)
+
+    } catch (error) {
         res.sendStatus(500)
     }
 })
