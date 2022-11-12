@@ -50,7 +50,6 @@ app.post('/participants', async (req, res) => {
         }
 
         body.lastStatus = Date.now()
-        console.log(body)
 
         await participantsC.insertOne(body)
         res.sendStatus(201)
@@ -123,10 +122,10 @@ app.get('/messages', async (req, res)=>{
     try {
         const messages = await messagesC.find().toArray()
 
-        const showMessages = messages.filter(e => e.to === user || e.from===user || e.to==='Todos' )
+        let showMessages = messages.filter(e => e.to === user || e.from===user || e.to==='Todos' )
 
         if(limit){
-            showMessages = showMessages.slice(limit)
+            showMessages = showMessages.slice(0,limit)
         }
 
         res.status(200).send(showMessages)
@@ -156,6 +155,25 @@ app.post('/status', async(req,res)=>{
         res.sendStatus(500)
     }
 })
+
+setInterval(async ()=>{
+    const participants = await participantsC.find().toArray()
+
+    participants.forEach(async (e)=>{
+        let d = new Date();
+        let time = d.toLocaleTimeString();
+        if(( (Date.now()/1000)) - (e.lastStatus/1000) > 10){
+            await participantsC.deleteOne({name: e.name})
+            await messagesC.insertOne({
+                from: e.name,
+                to:'Todos',
+                text: 'sai da sala...',
+                type: 'status',
+                time: time
+            })
+        }
+    })
+}, 15000)
 
 
 app.listen(5000, () => console.log('Server on 5000:'))
