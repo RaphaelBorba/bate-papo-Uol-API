@@ -28,9 +28,6 @@ try {
 const participantsC = db.collection('participants')
 const messagesC = db.collection('messages')
 
-//GLOBAL ELEMENTS
-
-let user
 
 //ROUTES
 app.post('/participants', async (req, res) => {
@@ -54,8 +51,6 @@ app.post('/participants', async (req, res) => {
 
         body.lastStatus = Date.now()
         console.log(body)
-
-        user = body.name
 
         await participantsC.insertOne(body)
         res.sendStatus(201)
@@ -82,6 +77,7 @@ app.get('/participants', async (req, res) => {
 app.post('/messages', async (req, res) => {
 
     const body = req.body;
+    const user = req.headers.user;
 
     const validation = createMessage.validate(body, { abortEarly: false })
     if (validation.error) {
@@ -91,9 +87,6 @@ app.post('/messages', async (req, res) => {
 
     try {
         const participants = await participantsC.find().toArray()
-
-        console.log(body.to)
-        console.log(participants)
 
         if (body.to !== 'Todos' && !participants.find(e => e.name === body.to)) {
             res.status(409).send({ message: 'Este usuário não existe' })
@@ -111,8 +104,7 @@ app.post('/messages', async (req, res) => {
         body.from = user
         
 
-        /* await messagesC.insertOne(body) */
-        console.log(body)
+        await messagesC.insertOne(body)
 
         res.sendStatus(201)
 
@@ -123,6 +115,29 @@ app.post('/messages', async (req, res) => {
 
 })
 
+app.get('/messages', async (req, res)=>{
+
+    const limit = req.query.limit
+    const user = req.headers.user
+
+    try {
+        const messages = await messagesC.find().toArray()
+
+        const showMessages = messages.filter(e => e.to === user || e.from===user || e.to==='Todos' )
+
+        if(limit){
+            showMessages = showMessages.slice(limit)
+        }
+
+
+        console.log(messages)
+        res.status(200).send(showMessages)
+        
+    } catch (error) {
+        console.log(error)
+        res.sendStatus(500)
+    }
+})
 
 
 app.listen(5000, () => console.log('Server on 5000:'))
