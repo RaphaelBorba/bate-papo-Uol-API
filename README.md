@@ -1,4 +1,3 @@
-# bate-papo-Uol-API
-API from BatePapoUol
+# Bate-Papo-Uol-API
 
-<h1>Bate Papo UOL API</h1>
+API from BatePapoUol
