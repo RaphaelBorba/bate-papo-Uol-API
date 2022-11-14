@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { createMessage, createUser } from './schemas.js'
 import dotenv from 'dotenv'
-import { MongoClient } from 'mongodb'
+import { MongoClient, ObjectId } from 'mongodb'
 
 
 //CONFIGS
@@ -154,6 +154,33 @@ app.post('/status', async(req,res)=>{
     } catch (error) {
         res.sendStatus(500)
     }
+})
+
+app.delete('/messages/:id', async (req, res)=>{
+
+    const messageId = req.params.id
+    const user = req.headers.user
+
+    try {
+        const message = await messagesC.findOne({_id: ObjectId(messageId)})
+
+        if(!message){
+            res.sendStatus(404)
+            return
+        }
+        if(message.from !== user){
+            res.sendStatus(401)
+            return
+        }
+
+        await messagesC.deleteOne({_id: ObjectId(messageId)})
+
+        res.status(200).send({message: 'Mensagem apagada!'})
+    } catch (error) {
+        console.log(error)
+        res.sendStatus(500)
+    }
+
 })
 
 setInterval(async ()=>{
